@@ -13,8 +13,8 @@ import time
 import typing
 
 from aiogram import Bot, Dispatcher
-from aiogram.enums import ParseMode
-from aiogram.exceptions import ConnectionError, TelegramUnauthorizedError
+from aiogram.types import ParseMode
+from aiogram.utils.exceptions import TerminatedByOtherGetUpdates, Unauthorized
 from hikkatl.errors.rpcerrorlist import InputUserDeactivatedError, YouBlockedUserError
 from hikkatl.tl.functions.contacts import UnblockRequest
 from hikkatl.tl.types import Message
@@ -131,7 +131,7 @@ class InlineManager(
             bot_me = await self.bot.get_me()
             self.bot_username = bot_me.username
             self.bot_id = bot_me.id
-        except TelegramUnauthorizedError:
+        except Unauthorized:
             logger.critical("Token expired, revoking...")
             return await self._dp_revoke_token(False)
 
@@ -190,9 +190,9 @@ class InlineManager(
             nonlocal revoke, old
             try:
                 return await old(*args, **kwargs)
-            except ConnectionError:
+            except TerminatedByOtherGetUpdates:
                 await revoke()
-            except TelegramUnauthorizedError:
+            except Unauthorized:
                 logger.critical("Got Unauthorized")
                 await self._stop()
 
